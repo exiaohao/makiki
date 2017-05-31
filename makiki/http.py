@@ -15,7 +15,10 @@ from .executor import FunctionExecutor
 API = collections.namedtuple('API', ['uri', 'method', 'func'])
 
 
-def simple_http_wrapper(data=None, status=200, message='Success', code=0):
+def simple_http_wrapper(data=None, status=200, message='Success', code=0, raw_output=False):
+    if raw_output:
+        return data
+
     return {
         'meta': {
             'code': code,
