@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from makiki.http import API
+from makiki.http import (
+    API,
+    OUTPUT
+)
 
 from .handler.hello import hello
 
 
 user_apis = (
-    API(uri='/hello', method='GET', func=hello),
+    API(uri='/hello', method='GET', func=hello, output=OUTPUT.REST),
 )

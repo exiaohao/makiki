@@ -12,7 +12,12 @@ import collections
 from .executor import FunctionExecutor
 
 
-API = collections.namedtuple('API', ['uri', 'method', 'func'])
+API = collections.namedtuple('API', ['uri', 'method', 'func', 'output'])
+
+
+class OUTPUT:
+    REST = 'rest'
+    RAW = 'raw'
 
 
 def simple_http_wrapper(data=None, status=200, message='Success', code=0, raw_output=False):
