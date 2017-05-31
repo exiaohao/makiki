@@ -15,6 +15,8 @@ from .exception import (
     Unauthorized,
 )
 
+from .http import OUTPUT
+
 hub = get_hub()
 hub.NOT_ERROR = tuple(list(hub.NOT_ERROR) + [falcon.http_status.HTTPStatus])
 
@@ -30,19 +32,19 @@ class FunctionExecutor(object):
         self.identity_func = identity_func
         self.log_error = log_error
 
-    def _http_wrapper(self, data=None, status=200, message='Success', code=0, response=None):
+    def _http_wrapper(self, data=None, status=200, message='Success', code=0, response=None, raw_output=False):
         if response:
             response.status = getattr(falcon, 'HTTP_{}'.format(status))
-        return self.http_wrapper(data, status, message, code)
+        return self.http_wrapper(data, status, message, code, raw_output)
 
-    def _process(self, func, args, kwargs, request, response):
+    def _process(self, func, args, kwargs, request, response, output=OUTPUT.REST):
         start_sig = blinker.signal('BeforeFunctionExecute')
         start_sig.send(request)
 
         if not self.auth_func(request, func):
             raise Unauthorized
 
-        return self._http_wrapper(data=func(*args, **kwargs))
+        return self._http_wrapper(data=func(*args, **kwargs), raw_output=output == OUTPUT.RAW)
 
     def _send_sentry_exc(self, request, args, kwargs):
         if self.sentry_client:
@@ -101,7 +103,7 @@ class FunctionExecutor(object):
         end_sig.send(request)
         func_logger.info(self._prepare_log(func.__name__, args, kwargs, duration, request))
 
-    def __call__(self, func):
+    def __call__(self, func, output):
         func_logger = logging.getLogger(func.__module__)
 
         @functools.wraps(func)
@@ -118,7 +120,7 @@ class FunctionExecutor(object):
                 if 'response' not in _of.__code__.co_varnames:
                     del kwargs['response']
             try:
-                return self._process(func, args, kwargs, request, response)
+                return self._process(func, args, kwargs, request, response, output)
             except falcon.http_status.HTTPStatus:
                 raise
             except Exception as e:
